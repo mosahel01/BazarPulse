@@ -552,6 +552,11 @@ window.Pages = (() => {
         </div>
 
         <div class="split-grid">
+          <a class="panel quick-link" href="#/game">
+            <div class="section-icon">🎮</div>
+            <div class="section-title">Prediction game</div>
+            <div class="muted">Guess UP or DOWN, earn points.</div>
+          </a>
           <a class="panel quick-link" href="#/stocks">
             <div class="section-icon">🏛️</div>
             <div class="section-title">Stocks universe</div>

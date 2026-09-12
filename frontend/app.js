@@ -11,6 +11,7 @@ window.App = (() => {
     { hash: '#/ideas', label: 'Ideas' },
     { hash: '#/watchlists', label: 'Watchlists' },
     { hash: '#/market', label: 'Market' },
+    { hash: '#/game', label: 'Game' },
   ];
 
   function parseHash() {
@@ -55,6 +56,10 @@ window.App = (() => {
       else if (slug === 'watchlists') html = await window.Pages.watchlists();
       else if (slug === 'market') html = await window.Pages.market();
       else if (slug === 'auth') html = await window.Pages.auth();
+      else if (slug === 'game') {
+        html = window.Game.init();
+        setTimeout(() => bindGameEvents(), 0);
+      }
       else if (slug === 'api') html = apiIntro();
       else if (slug === 'about') html = aboutPage();
       else html = await window.Pages.dashboard();
@@ -266,6 +271,25 @@ window.App = (() => {
     });
   }
 
+  function bindGameEvents() {
+    document.querySelectorAll('.game-btn-up, .game-btn-down').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dir = btn.classList.contains('game-btn-up') ? 'up' : 'down';
+        const result = window.Game.predict(dir);
+        app.innerHTML = result;
+        bindGameEvents();
+      });
+    });
+    const nextBtn = document.querySelector('.game-next-btn .btn');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const result = window.Game.next();
+        app.innerHTML = result;
+        bindGameEvents();
+      });
+    }
+  }
+
   function refreshNav() {
     renderNav();
     router();
@@ -355,7 +379,106 @@ window.App = (() => {
   return { router, refreshNav, parseHash, pollStatus };
 })();
 
+/* ─── Theme: automatic / light / dark ─── */
+
+window.Theme = (() => {
+  const KEY = 'marketpulse_theme';
+  const darkMq = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
+  const ICONS = { auto: '◐', light: '☀', dark: '☾' };
+  const LABELS = { auto: 'Automatic', light: 'Light', dark: 'Dark' };
+
+  const readPref = () => {
+    try {
+      return localStorage.getItem(KEY) || 'auto';
+    } catch {
+      return 'auto';
+    }
+  };
+
+  const savePref = (value) => {
+    try {
+      localStorage.setItem(KEY, value);
+    } catch {
+      /* storage unavailable — theme stays for this session */
+    }
+  };
+
+  const effective = () => {
+    const pref = readPref();
+    if (pref !== 'auto') return pref;
+    return darkMq?.matches ? 'dark' : 'light';
+  };
+
+  function apply(animate) {
+    const pref = readPref();
+    const root = document.documentElement;
+    const value = effective();
+    if (root) {
+      if (animate) root.classList.add('theme-anim');
+      root.dataset.theme = pref;
+      root.style.colorScheme = value;
+      if (animate) setTimeout(() => root.classList.remove('theme-anim'), 250);
+    }
+    document.querySelectorAll('.theme-choice').forEach((el) => {
+      el.setAttribute('aria-checked', String(el.dataset.themeChoice === pref));
+    });
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.setAttribute('aria-label', `Theme: ${LABELS[pref]}`);
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.textContent = ICONS[value];
+    const label = document.getElementById('theme-label');
+    if (label) label.textContent = LABELS[pref];
+  }
+
+  function init() {
+    apply(false);
+
+    const btn = document.getElementById('theme-btn');
+    const menu = document.getElementById('theme-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+      btn.setAttribute('aria-expanded', String(!menu.hidden));
+    });
+
+    menu.querySelectorAll('.theme-choice').forEach((choice) => {
+      choice.addEventListener('click', () => {
+        savePref(choice.dataset.themeChoice);
+        apply(true);
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      if (!menu.hidden) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) {
+        menu.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      }
+    });
+
+    darkMq?.addEventListener?.('change', () => {
+      if (readPref() === 'auto') apply(true);
+    });
+  }
+
+  return { init, apply, effective };
+})();
+
 /* ─── Boot ─── */
+
+window.Theme.init();
 
 window.addEventListener('hashchange', () => window.App.router());
 

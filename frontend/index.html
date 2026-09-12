@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MarketPulse</title>
+    <script>
+      (function () {
+        try {
+          document.documentElement.dataset.theme =
+            localStorage.getItem('marketpulse_theme') || 'auto';
+        } catch (e) {
+          document.documentElement.dataset.theme = 'auto';
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,6 +32,48 @@
           </div>
           <div class="nav-links" id="nav-links"></div>
           <div class="navbar-right">
+            <div class="theme-wrap">
+              <button
+                class="theme-btn"
+                id="theme-btn"
+                type="button"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-label="Theme: automatic"
+              >
+                <span class="theme-icon" id="theme-icon" aria-hidden="true">◐</span>
+                <span id="theme-label">Automatic</span>
+              </button>
+              <div class="theme-menu" id="theme-menu" role="menu" hidden>
+                <button
+                  class="theme-choice"
+                  type="button"
+                  role="menuitemradio"
+                  data-theme-choice="auto"
+                  aria-checked="true"
+                >
+                  <span class="theme-icon" aria-hidden="true">◐</span> Automatic
+                </button>
+                <button
+                  class="theme-choice"
+                  type="button"
+                  role="menuitemradio"
+                  data-theme-choice="light"
+                  aria-checked="false"
+                >
+                  <span class="theme-icon" aria-hidden="true">☀</span> Light
+                </button>
+                <button
+                  class="theme-choice"
+                  type="button"
+                  role="menuitemradio"
+                  data-theme-choice="dark"
+                  aria-checked="false"
+                >
+                  <span class="theme-icon" aria-hidden="true">☾</span> Dark
+                </button>
+              </div>
+            </div>
             <span class="mode-pill" id="mode-badge">demo</span>
             <div class="status-badge" id="status-badge">
               <span class="status-dot" id="status-dot"></span>
@@ -46,6 +98,7 @@
     <script src="api.js"></script>
     <script src="ui.js"></script>
     <script src="pages.js"></script>
+    <script src="game.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
