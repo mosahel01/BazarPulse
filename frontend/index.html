@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarketPulse</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="navbar">
+        <div class="navbar-inner">
+          <div class="logo" onclick="location.hash = '#/'">
+            <div class="logo-mark">MP</div>
+            <span>MarketPulse</span>
+          </div>
+          <div class="nav-links" id="nav-links"></div>
+          <div class="navbar-right">
+            <span class="mode-pill" id="mode-badge">demo</span>
+            <div class="status-badge" id="status-badge">
+              <span class="status-dot" id="status-dot"></span>
+              <span id="status-text">Connecting...</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main class="main" id="app"></main>
+
+      <footer class="footer">
+        <div class="footer-inner">
+          <span>MarketPulse &mdash; demo &amp; user-generated content, not financial advice</span>
+          <span>Fastify · SQLite · Drizzle</span>
+        </div>
+      </footer>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="demo-data.js"></script>
+    <script src="api.js"></script>
+    <script src="ui.js"></script>
+    <script src="pages.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
