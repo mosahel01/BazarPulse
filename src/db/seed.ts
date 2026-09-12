@@ -1,13 +1,18 @@
 import argon2 from 'argon2';
 import { count } from 'drizzle-orm';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { fileURLToPath } from 'node:url';
+import { env } from '../config/env.js';
 import { createDatabase } from './client.js';
+import { applyMigrations } from './migrate.js';
 import * as s from './schema.js';
 
-const MIGRATIONS_FOLDER = fileURLToPath(new URL('./migrations', import.meta.url));
-
 const DEV_PASSWORD = 'MarketPulse@2026';
+
+if (env.NODE_ENV === 'production' && process.env.SEED_ALLOWED !== 'true') {
+  console.error(
+    'Refusing to seed in production. If you really want demo data, set SEED_ALLOWED=true for disposable environments only.',
+  );
+  process.exit(1);
+}
 
 const seedUsers: Array<{
   username: string;
@@ -314,7 +319,7 @@ const hoursAgo = (hours: number): Date => new Date(Date.now() - Math.round(hours
 async function seed(): Promise<void> {
   const { db, sqlite } = createDatabase();
 
-  migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+  applyMigrations(db);
 
   const counts = await db.select({ value: count() }).from(s.users);
   const existingUsers = counts[0]?.value ?? 0;

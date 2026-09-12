@@ -21,9 +21,20 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   const app = Fastify({
     logger: options.logger === undefined ? config.logger : options.logger,
     trustProxy: config.isProduction,
+    bodyLimit: 1 * 1024 * 1024,
+    connectionTimeout: 30_000,
+    requestTimeout: 30_000,
   });
 
   app.decorate('config', config);
+
+  app.addHook('onSend', async (_request, reply, payload) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'no-referrer');
+    reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    return payload;
+  });
 
   registerDatabase(app, options.database);
 

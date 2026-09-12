@@ -60,3 +60,51 @@ describe('error response shape', () => {
     });
   });
 });
+
+describe('boot hardening', () => {
+  it('applies database migrations automatically when no handle is injected', async () => {
+    const app = await buildApp({ logger: false, serveFrontend: false });
+
+    const res = await app.inject({ method: 'GET', url: '/health/ready' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ status: 'ok', database: 'up' });
+
+    const tables = app.sqlite
+      .prepare(
+        "SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name IN ('users', 'posts', 'stocks', 'watchlists')",
+      )
+      .get() as { n: number };
+    expect(tables.n).toBe(4);
+
+    await app.close();
+  });
+
+  it('sends base security headers on responses', async () => {
+    const database = createTestDatabase();
+    const app = await buildApp({ logger: false, serveFrontend: false, database });
+
+    const res = await app.inject({ method: 'GET', url: '/health' });
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-frame-options']).toBe('DENY');
+    expect(res.headers['referrer-policy']).toBe('no-referrer');
+
+    await app.close();
+    database.close();
+  });
+
+  it('reports a consistent error shape for oversized payloads', async () => {
+    const database = createTestDatabase();
+    const app = await buildApp({ logger: false, serveFrontend: false, database });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { username: 'a'.repeat(2 * 1024 * 1024), password: 'x' },
+    });
+    expect(res.statusCode).toBe(413);
+    expect(res.json().error.code).toBe('VALIDATION_ERROR');
+
+    await app.close();
+    database.close();
+  });
+});

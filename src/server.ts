@@ -4,6 +4,16 @@ import { env } from './config/env.js';
 async function main(): Promise<void> {
   const app = await buildApp();
 
+  process.on('unhandledRejection', (reason) => {
+    app.log.error({ err: reason }, 'Unhandled promise rejection');
+    process.exit(1);
+  });
+
+  process.on('uncaughtException', (err) => {
+    app.log.error({ err }, 'Uncaught exception');
+    process.exit(1);
+  });
+
   const shutdown = async (signal: string): Promise<void> => {
     app.log.info({ signal }, 'Shutting down');
     await app.close();

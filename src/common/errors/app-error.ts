@@ -70,6 +70,9 @@ export class AppError extends Error {
 export function errorCodeForStatus(statusCode: number): AppErrorCode {
   switch (statusCode) {
     case 400:
+    case 413:
+    case 415:
+    case 422:
       return 'VALIDATION_ERROR';
     case 401:
       return 'UNAUTHORIZED';
@@ -82,6 +85,6 @@ export function errorCodeForStatus(statusCode: number): AppErrorCode {
     case 429:
       return 'RATE_LIMITED';
     default:
-      return 'INTERNAL_ERROR';
+      return statusCode >= 400 && statusCode < 500 ? 'VALIDATION_ERROR' : 'INTERNAL_ERROR';
   }
 }

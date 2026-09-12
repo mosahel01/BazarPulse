@@ -1,9 +1,20 @@
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import { migrate as runMigrations } from 'drizzle-orm/better-sqlite3/migrator';
+import { fileURLToPath } from 'node:url';
+import type * as schema from './schema.js';
 import { createDatabase } from './client.js';
+
+export function migrationsFolder(): string {
+  return fileURLToPath(new URL('./migrations', import.meta.url));
+}
+
+export function applyMigrations(db: BetterSQLite3Database<typeof schema>): void {
+  runMigrations(db, { migrationsFolder: migrationsFolder() });
+}
 
 async function main(): Promise<void> {
   const { db, close } = createDatabase();
-  migrate(db, { migrationsFolder: './src/db/migrations' });
+  applyMigrations(db);
   console.log('Migrations applied successfully.');
   close();
 }

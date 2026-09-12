@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { createDatabase, type DatabaseHandle } from '../db/client.js';
+import { applyMigrations } from '../db/migrate.js';
 
 export function registerDatabase(app: FastifyInstance, handle?: DatabaseHandle): void {
   const dbHandle = handle ?? createDatabase();
@@ -8,6 +9,7 @@ export function registerDatabase(app: FastifyInstance, handle?: DatabaseHandle):
   app.decorate('sqlite', dbHandle.sqlite);
 
   if (!handle) {
+    applyMigrations(dbHandle.db);
     app.addHook('onClose', () => {
       dbHandle.close();
     });
