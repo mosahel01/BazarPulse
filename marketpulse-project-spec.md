@@ -390,8 +390,7 @@ marketpulse/
 ├── package-lock.json
 ├── tsconfig.json
 ├── vitest.config.ts
-├── README.md
-└── AGENTS.md
+└── README.md
 ```
 
 This is a recommendation rather than a rigid law. The codebase should stay simple enough that a new developer can understand the flow.
@@ -2462,117 +2461,7 @@ The likely interesting areas are:
 
 ---
 
-# 57. What Not to Let an AI Coding Agent Do
-
-The coding agent must not:
-
-- rewrite the entire application without approval
-- add unnecessary dependencies
-- introduce microservices without a clear reason
-- add Redis just because it is commonly used
-- add Docker Compose infrastructure that is not needed
-- replace SQLite with PostgreSQL without discussion
-- create fake abstractions everywhere
-- use `any` as an escape hatch
-- disable TypeScript strictness to make compilation pass
-- silently swallow errors
-- commit secrets
-- fabricate test results
-- claim functionality is complete without running it
-- delete working code merely to simplify the agent's task
-
-Before making major architectural changes, the agent should explain the change and its tradeoff.
-
----
-
-# 58. AI Coding Agent Working Style
-
-The coding agent should work incrementally.
-
-For each feature:
-
-1. inspect the existing code
-2. explain the intended implementation briefly
-3. make a small coherent change
-4. run relevant tests/lint/build
-5. inspect failures
-6. fix failures
-7. summarize changed files
-8. identify any remaining risks
-
-The agent should not make huge speculative changes.
-
-The agent should prefer existing project conventions over inventing new ones.
-
-When a requirement is ambiguous, choose the simplest defensible implementation and document the assumption.
-
----
-
-# 59. Suggested AGENTS.md Rules
-
-Create an `AGENTS.md` in the repository root with rules along these lines:
-
-```md
-# MarketPulse Agent Instructions
-
-## Project
-
-MarketPulse is a backend-first Node.js + TypeScript stock-community application.
-
-## Priorities
-
-1. Correctness
-2. Security
-3. Tests
-4. Maintainability
-5. Simplicity
-
-## Stack
-
-- Node.js
-- TypeScript
-- Fastify
-- SQLite
-- Drizzle ORM
-- Zod
-- Vitest
-- Podman
-
-## Rules
-
-- Use strict TypeScript.
-- Avoid `any` unless there is a documented reason.
-- Validate external input.
-- Never store plaintext passwords.
-- Never commit secrets.
-- Use parameterized/safe database operations.
-- Enforce authorization on the backend.
-- Prefer database constraints for invariants.
-- Keep route handlers thin.
-- Keep business rules in services/domain logic.
-- Do not introduce unnecessary abstractions.
-- Do not introduce microservices.
-- Do not add infrastructure without a concrete requirement.
-- Run relevant tests after changes.
-- Run lint/build when appropriate.
-- Never claim tests passed unless they were actually run.
-- Do not fabricate implementation details in documentation.
-- Explain significant architectural changes before implementing them.
-
-## Backend First
-
-The backend is the main deliverable.
-
-The frontend should remain simple and should not drive backend architecture.
-
-## Financial Content
-
-User-generated/demo market content is application data and must not be represented as guaranteed financial advice or fact.
-```
-
----
-
-# 60. Future Features
+# 57. Future Features
 
 Potential future features, intentionally outside the MVP:
 
@@ -2603,7 +2492,7 @@ Add features only after the core backend is solid.
 
 ---
 
-# 61. Final Product Philosophy
+# 58. Final Product Philosophy
 
 MarketPulse should be:
 
@@ -2625,7 +2514,7 @@ The implementation should favor **boring, correct engineering** over flashy comp
 
 ---
 
-# 62. Final Build Order
+# 59. Final Build Order
 
 Use this order unless a concrete technical reason requires deviation:
 
