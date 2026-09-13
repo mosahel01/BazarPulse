@@ -24,6 +24,7 @@ export const reportReasons = [
   'OFF_TOPIC',
   'OTHER',
 ] as const;
+export type ReportReason = (typeof reportReasons)[number];
 
 export const reportStatuses = ['OPEN', 'REVIEWING', 'RESOLVED', 'DISMISSED'] as const;
 export type ReportStatus = (typeof reportStatuses)[number];

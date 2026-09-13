@@ -1,8 +1,9 @@
-/* Stock prediction game — predict UP or DOWN, track your score. */
+/* Stock prediction game — predict UP or DOWN, track your score.
+   Rounds come from the backend market engine when live, otherwise from the
+   demo dataset. */
 
 window.Game = (() => {
   const U = window.UI;
-  const DEMO = window.DemoData;
 
   const state = {
     score: 500,
@@ -15,26 +16,10 @@ window.Game = (() => {
     revealed: false,
   };
 
-  function pickStock() {
-    const pool = DEMO.stocks.filter((s) => s.symbol !== (state.current?.symbol ?? ''));
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    const drift = (Math.random() - 0.45) * pick.price * 0.04;
-    const newPrice = Math.round((pick.price + drift) * 100) / 100;
-    const change = Math.round((newPrice - pick.price) * 100) / 100;
-    const changePct = Math.round((change / pick.price) * 10000) / 100;
-    return {
-      symbol: pick.symbol,
-      companyName: pick.companyName,
-      sector: pick.sector,
-      startPrice: pick.price,
-      endPrice: newPrice,
-      change,
-      changePct,
-    };
-  }
-
-  function newRound() {
-    state.current = pickStock();
+  async function startRound() {
+    const exclude = state.current ? [state.current.symbol] : [];
+    const { data: round } = await window.API.gameRound(exclude);
+    state.current = round;
     state.revealed = false;
   }
 
@@ -166,16 +151,16 @@ window.Game = (() => {
   }
 
   return {
-    init() {
-      newRound();
+    async init() {
+      await startRound();
       return render();
     },
     predict(dir) {
       predict(dir);
       return render();
     },
-    next() {
-      newRound();
+    async next() {
+      await startRound();
       return render();
     },
   };

@@ -53,7 +53,7 @@ window.Pages = (() => {
         <div class="hero compact">
           <div class="hero-badge"><span class="hero-badge-dot"></span> market pulse</div>
           <h1>Markets at a glance</h1>
-          <p>Indices and movers are <strong>demo data</strong> — the live market-data provider is optional future work.</p>
+          <p>Indices and quotes come from the built-in market engine — deterministic per-day values, generated in-process.</p>
         </div>
 
         <div class="ticker" id="ticker">
@@ -315,7 +315,9 @@ window.Pages = (() => {
             }
           </div>
           <form class="comment-form" id="comment-form" data-post="${U.esc(p.id)}">
-            <input class="input" name="author" placeholder="Your username" required />
+            ${API.mode() !== 'live'
+              ? '<input class="input" name="author" placeholder="Your username" required />'
+              : ''}
             <div class="comment-form-row">
               <input class="input" name="body" placeholder="Add a comment…" required />
               <button class="btn btn-primary" type="submit">Post</button>
@@ -584,15 +586,49 @@ window.Pages = (() => {
   return { market, feed, stocks, stock, post, watchlists, ideas, auth, dashboard };
 })();
 
-/* ── In-demo interactions (vote, comment, watchlist). Real endpoints replace these later. ── */
+/* ── In-demo interactions (vote, comment, watchlist). In live mode these call the REST API. ── */
 
 window.PageActions = (() => {
   const DEMO = window.DemoData;
   const reroute = () => window.App.router();
 
+  function toast(message, isError = true) {
+    let el = document.getElementById('action-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'action-toast';
+      el.style.cssText =
+        'position:fixed;left:50%;bottom:1.25rem;transform:translateX(-50%);padding:.65rem 1rem;border-radius:8px;font-size:.85rem;z-index:1000;max-width:min(92vw,480px);box-shadow:0 8px 24px rgba(0,0,0,.25);' +
+        (isError
+          ? 'background:var(--red,#e5484d);color:#fff;'
+          : 'background:var(--green,#30a46c);color:#fff;');
+    }
+    el.textContent = message;
+    if (!el.isConnected) document.body.appendChild(el);
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.remove(), 3200);
+  }
+
+  async function requireLiveAction(action, args) {
+    if (window.UIState.mode !== 'live') return;
+    try {
+      await action(...args);
+      reroute();
+    } catch (err) {
+      if (err?.status === 401 || err?.status === 403) {
+        toast('Please sign in to do that.');
+      } else {
+        toast(err?.message || 'That action failed.');
+      }
+    }
+  }
+
   return {
     vote(postId, value) {
-      if (window.UIState.mode === 'live') return;
+      if (window.UIState.mode === 'live') {
+        requireLiveAction(window.API.vote, [postId, value]);
+        return;
+      }
       const post = DEMO.posts.find((p) => p.id === postId);
       if (!post) return;
       if (post.userVote === value) {
@@ -607,7 +643,10 @@ window.PageActions = (() => {
     },
 
     addComment(postId, author, body) {
-      if (window.UIState.mode === 'live') return;
+      if (window.UIState.mode === 'live') {
+        requireLiveAction(window.API.addComment, [postId, body]);
+        return;
+      }
       DEMO.comments.push({
         id: 'c' + Date.now(),
         postId,
@@ -621,13 +660,19 @@ window.PageActions = (() => {
     },
 
     createWatchlist(name) {
-      if (window.UIState.mode === 'live') return;
+      if (window.UIState.mode === 'live') {
+        requireLiveAction(window.API.createWatchlist, [name]);
+        return;
+      }
       DEMO.watchlists.push({ id: 'w' + Date.now(), name, stocks: [] });
       reroute();
     },
 
     addWatchStock(wlId, symbol) {
-      if (window.UIState.mode === 'live') return;
+      if (window.UIState.mode === 'live') {
+        requireLiveAction(window.API.addWatchStock, [wlId, symbol]);
+        return;
+      }
       const wl = DEMO.watchlists.find((w) => w.id === wlId);
       if (wl && !wl.stocks.includes(symbol)) wl.stocks.push(symbol);
       reroute();

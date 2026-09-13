@@ -7,6 +7,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   SQLITE_DATABASE_PATH: z.string().default('./data/marketpulse.db'),
+  MARKET_ENGINE: z.enum(['auto', 'python', 'ts']).default('auto'),
   AUTH_SECRET: z.string().min(16, 'AUTH_SECRET must be at least 16 characters'),
   GOOGLE_CLIENT_ID: z.string().optional(),
 });

@@ -73,6 +73,28 @@ window.API = (() => {
     return demoFn();
   }
 
+  async function postRequest(path, body, demoFn) {
+    try {
+      const res = await fetch(`/api/v1${path}`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          Accept: 'application/json',
+          ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+        },
+        body: JSON.stringify(body ?? {}),
+      });
+      if (res.ok) {
+        setMode('live');
+        return res.json();
+      }
+    } catch {
+      /* network error -> fall through to demo */
+    }
+    setMode('demo');
+    return demoFn();
+  }
+
   async function authRequest(path, { method = 'GET', body } = {}) {
     const res = await fetch(`/api/v1${path}`, {
       method,
@@ -183,6 +205,43 @@ window.API = (() => {
       request('/watchlists', async () => {
         await delay(120);
         return { data: clone(DEMO.watchlists) };
+      }),
+
+    gameRound: (exclude = []) =>
+      postRequest('/market/game/round', { exclude }, async () => {
+        await delay(120);
+        const pool = clone(DEMO.stocks).filter((s) => !exclude.includes(s.symbol));
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        const drift = (Math.random() - 0.45) * pick.price * 0.04;
+        const endPrice = Math.round((pick.price + drift) * 100) / 100;
+        const change = Math.round((endPrice - pick.price) * 100) / 100;
+        const changePct = Math.round((change / pick.price) * 10000) / 100;
+        return {
+          data: {
+            symbol: pick.symbol,
+            companyName: pick.companyName,
+            sector: pick.sector,
+            startPrice: pick.price,
+            endPrice,
+            change,
+            changePct,
+          },
+        };
+      }),
+
+    /* ── authenticated write actions (live mode only) ── */
+
+    createPost: (body) => authRequest('/posts', { method: 'POST', body }),
+    vote: (postId, value) =>
+      authRequest(`/posts/${encodeURIComponent(postId)}/vote`, { method: 'PUT', body: { value } }),
+    removeVote: (postId) => authRequest(`/posts/${encodeURIComponent(postId)}/vote`, { method: 'DELETE' }),
+    addComment: (postId, body) =>
+      authRequest(`/posts/${encodeURIComponent(postId)}/comments`, { method: 'POST', body: { body } }),
+    createWatchlist: (name) => authRequest('/watchlists', { method: 'POST', body: { name } }),
+    addWatchStock: (watchlistId, symbol) =>
+      authRequest(`/watchlists/${encodeURIComponent(watchlistId)}/stocks`, {
+        method: 'POST',
+        body: { symbol },
       }),
   };
 })();

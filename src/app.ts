@@ -5,7 +5,12 @@ import fastifyStatic from '@fastify/static';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { config } from './config/config.js';
+import { env } from './config/env.js';
 import type { DatabaseHandle } from './db/client.js';
+import { stocks } from './db/schema.js';
+import type { MarketDataEngine } from './modules/market/engine/types.js';
+import { createMarketEngine } from './modules/market/engine/market-engine.js';
+import { buildEngineRegistry } from './modules/market/registry.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerDatabase } from './plugins/db.js';
 import { registerErrorHandlers } from './plugins/error-handler.js';
@@ -15,6 +20,7 @@ export interface BuildAppOptions {
   logger?: boolean | { level: string };
   serveFrontend?: boolean;
   database?: DatabaseHandle;
+  marketEngine?: MarketDataEngine;
 }
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
@@ -45,6 +51,12 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   await registerAuth(app);
 
+  const engine = await setupMarketEngine(app, options.marketEngine);
+  app.decorate('marketEngine', engine);
+  app.addHook('onClose', () => {
+    engine.close();
+  });
+
   const serveFrontend = options.serveFrontend ?? true;
   if (serveFrontend) {
     const frontendDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'frontend');
@@ -55,4 +67,26 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await registerRoutes(app);
 
   return app;
+}
+
+async function setupMarketEngine(
+  app: FastifyInstance,
+  injected?: MarketDataEngine,
+): Promise<MarketDataEngine> {
+  if (injected) {
+    return injected;
+  }
+
+  const rows = app.db
+    .select({
+      symbol: stocks.symbol,
+      companyName: stocks.companyName,
+      sector: stocks.sector,
+    })
+    .from(stocks)
+    .all();
+  const registry = buildEngineRegistry(rows);
+  return createMarketEngine(registry, env.MARKET_ENGINE, (message) => {
+    app.log.warn(message);
+  });
 }

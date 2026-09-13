@@ -57,7 +57,7 @@ window.App = (() => {
       else if (slug === 'market') html = await window.Pages.market();
       else if (slug === 'auth') html = await window.Pages.auth();
       else if (slug === 'game') {
-        html = window.Game.init();
+        html = await window.Game.init();
         setTimeout(() => bindGameEvents(), 0);
       }
       else if (slug === 'api') html = apiIntro();
@@ -282,8 +282,9 @@ window.App = (() => {
     });
     const nextBtn = document.querySelector('.game-next-btn .btn');
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        const result = window.Game.next();
+      nextBtn.addEventListener('click', async () => {
+        nextBtn.disabled = true;
+        const result = await window.Game.next();
         app.innerHTML = result;
         bindGameEvents();
       });
